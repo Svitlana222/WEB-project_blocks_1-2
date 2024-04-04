@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            background-color: #eee;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="scores">
+        <h2>Top 3 Scores</h2>
+        <ol id="topScores"></ol>
+        <h2>Bottom 3 Scores</h2>
+        <ol id="bottomScores"></ol>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gridSize = 20;
+        let snake = [{x: 10, y: 10}];
+        let food = {x: 15, y: 15};
+        let star = {x: 5, y: 5};
+        let score = 0;
+        let scores = [];
+
+        function draw() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the snake
+            ctx.fillStyle = 'green';
+            snake.forEach(segment => {
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
+            });
+
+            // Draw the food
+            ctx.fillStyle = 'red';
+            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+
+            // Draw the star
+            ctx.fillStyle = 'yellow';
+            ctx.fillRect(star.x * gridSize, star.y * gridSize, gridSize, gridSize);
+
+            // Draw the score
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Score: ${score}`, 10, 25);
+        }
+
+        function update() {
+            // Move the snake
+            const head = {x: snake[0].x, y: snake[0].y};
+            switch (direction) {
+                case 'up':
+                    head.y -= 1;
+                    break;
+                case 'down':
+                    head.y += 1;
+                    break;
+                case 'left':
+                    head.x -= 1;
+                    break;
+                case 'right':
+                    head.x += 1;
+                    break;
+            }
+
+            // Check if the snake ate the star
+            if (head.x === star.x && head.y === star.y) {
+                // Increase score and generate a new star
+                score += 20;
+                generateStar();
+            }
+
+            // Check for collisions
+            if (head.x < 0 || head.x >= canvas.width / gridSize ||
+                head.y < 0 || head.y >= canvas.height / gridSize ||
+                snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+                // Game over
+                clearInterval(gameLoop);
+                scores.push(score);
+                scores.sort((a, b) => b - a);
+                updateScores();
+                alert(`Game over! Your score: ${score}`);
+                return;
+            }
+
+            // Check for food
+            if (head.x === food.x && head.y === food.y) {
+                // Increase score and generate new food
+                score += 10;
+                generateFood();
+            } else {
+                // Remove the last segment of the snake
+                snake.pop();
+            }
+
+            // Move the head of the snake
+            snake.unshift(head);
+
+            // Redraw the canvas
+            draw();
+        }
+
+        function generateFood() {
+            food = {
+                x: Math.floor(Math.random() * (canvas.width / gridSize)),
+                y: Math.floor(Math.random() * (canvas.height / gridSize))
+            };
+        }
+
+        function generateStar() {
+            star = {
+                x: Math.floor(Math.random() * (canvas.width / gridSize)),
+                y: Math.floor(Math.random() * (canvas.height / gridSize))
+            };
+        }
+
+        function updateScores() {
+            const topScoresList = document.getElementById('topScores');
+            const bottomScoresList = document.getElementById('bottomScores');
+            topScoresList.innerHTML = '';
+            bottomScoresList.innerHTML = '';
+            for (let i = 0; i < Math.min(3, scores.length); i++) {
+                const listItemTop = document.createElement('li');
+                listItemTop.textContent = scores[i];
+                topScoresList.appendChild(listItemTop);
+
+                const listItemBottom = document.createElement('li');
+                listItemBottom.textContent = scores[scores.length - 1 - i];
+                bottomScoresList.appendChild(listItemBottom);
+            }
+        }
+
+        // Initialize the game
+        let direction = 'right';
+        generateFood();
+        generateStar();
+        draw();
+
+        // Set up keyboard controls
+        document.addEventListener('keydown', event => {
+            switch (event.key) {
+                case 'ArrowUp':
+                    if (direction !== 'down') direction = 'up';
+                    break;
+                case 'ArrowDown':
+                    if (direction !== 'up') direction = 'down';
+                    break;
+                case 'ArrowLeft':
+                    if (direction !== 'right') direction = 'left';
+                    break;
+                case 'ArrowRight':
+                    if (direction !== 'left') direction = 'right';
+                    break;
+            }
+        });
+
+        // Start the game loop
+        const gameLoop = setInterval(update, 100);
+    </script>
+</body>
+</html>
+
+
